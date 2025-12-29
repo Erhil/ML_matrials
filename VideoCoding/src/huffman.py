@@ -106,3 +106,76 @@ def get_codes(tree):
         else:
             values[node.get_value()] = code
     return values
+
+
+def encode_string(string, codes):
+    bit_stream = ""
+    for char in string:
+        bit_stream += codes[char]
+    return bit_stream
+
+
+def decode_scring(bit_stream, tree):
+    _curr = tree
+    string = ""
+    for bit in bit_stream:
+        if bit == "0":
+            _curr = _curr.left
+        else:
+            _curr = _curr.right
+        if _curr.get_value() is not None:
+            string += _curr.get_value()
+            _curr = tree
+    return string
+
+
+def save_bytecode(binary_string, fname):
+    """
+    Save bytecode to file.
+
+    Parameters
+    ----------
+    binary_string : str
+        Binary string.
+    fname : str
+        Filename.
+    """
+    num_padding_bits = 8 - (len(binary_string) % 8)
+    binary_string = "0" * num_padding_bits + binary_string
+
+    byte_values = [num_padding_bits]
+    for i in range(0, len(binary_string), 8):
+        byte_chunk = binary_string[i : i + 8]
+        integer_value = int(byte_chunk, 2)
+        byte_values.append(integer_value)
+
+    bytecode = bytes(byte_values)
+    with open(fname, "wb") as f:
+        f.write(bytecode)
+
+
+def load_bytecode(fname):
+    """
+    Load bytecode from given file.
+
+    Parameters
+    ----------
+    fname : str
+        Filename.
+
+    Returns
+    -------
+    str:
+        Binary string.
+    """
+    with open(fname, "rb") as f:
+        bytecode = f.read()
+
+    byte_values = list(bytecode)
+    num_padding_bits = byte_values[0]
+
+    binary_string = ""
+    for i in byte_values[1:]:
+        binary_string += "{:08b}".format(i)
+
+    return binary_string[num_padding_bits:]
